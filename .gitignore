@@ -1,1 +1,11 @@
-CLAUDE.md
+# deny by default — nothing gets committed unless explicitly allowed below
+*
+
+# always allowed
+!.gitignore
+!README.md
+!index.html
+
+# drop any site assets (images, gifs, css, etc.) in here — this folder is allowed
+!assets/
+!assets/**
