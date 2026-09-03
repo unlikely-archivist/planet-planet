@@ -30,17 +30,27 @@
 
   main {
     height: 100vh;
-    width: 100vw;
+    width: 200vw;
     display: grid;
     gap: 6px;
     padding: 6px;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(12, 1fr);
     grid-template-rows: repeat(4, 1fr);
     grid-template-areas:
-      "a a b c c c"
-      "a a d d e e"
-      "f f f g g h"
-      "f f f g g h";
+      "a a b c c c A A B C C C"
+      "a a d d e e A A D D E E"
+      "f f f g g h F F F G G H"
+      "f f f g g h F F F G G H";
+    animation: scroll-wall 42s linear infinite;
+  }
+
+  main:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes scroll-wall {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-100vw); }
   }
 
   a.box {
@@ -54,13 +64,12 @@
     border: 1px solid #2c2c2c;
     background: #111;
     letter-spacing: 0.01em;
-    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
 
   a.box:hover {
     border-color: #888;
     background: #1a1a1a;
-    transform: scale(0.985);
   }
 
   .box1 { grid-area: a; font-size: 1.4rem; background: #14110c; }
@@ -72,21 +81,14 @@
   .box7 { grid-area: g; font-size: 1.15rem; background: #1a1508; }
   .box8 { grid-area: h; font-size: 0.75rem; background: #150c1a; }
 
-  @media (max-width: 700px) {
-    main {
-      grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(8, 1fr);
-      grid-template-areas:
-        "a a"
-        "a a"
-        "b c"
-        "d e"
-        "f f"
-        "f f"
-        "g h"
-        "g h";
-    }
-  }
+  .box1dup { grid-area: A; font-size: 1.4rem; background: #14110c; }
+  .box2dup { grid-area: B; font-size: 0.8rem; background: #0e1211; }
+  .box3dup { grid-area: C; font-size: 1rem; background: #11101a; }
+  .box4dup { grid-area: D; font-size: 0.85rem; background: #1a1010; }
+  .box5dup { grid-area: E; font-size: 0.9rem; background: #0f1620; }
+  .box6dup { grid-area: F; font-size: 1.6rem; background: #101a12; }
+  .box7dup { grid-area: G; font-size: 1.15rem; background: #1a1508; }
+  .box8dup { grid-area: H; font-size: 0.75rem; background: #150c1a; }
 </style>
 </head>
 <body>
@@ -100,6 +102,14 @@
   <a class="box box6" href="pages/box-6.html">untitled</a>
   <a class="box box7" href="pages/box-7.html">untitled</a>
   <a class="box box8" href="pages/box-8.html">untitled</a>
+  <a class="box box1dup" href="pages/box-1.html">untitled</a>
+  <a class="box box2dup" href="pages/box-2.html">untitled</a>
+  <a class="box box3dup" href="pages/box-3.html">untitled</a>
+  <a class="box box4dup" href="pages/box-4.html">untitled</a>
+  <a class="box box5dup" href="pages/box-5.html">untitled</a>
+  <a class="box box6dup" href="pages/box-6.html">untitled</a>
+  <a class="box box7dup" href="pages/box-7.html">untitled</a>
+  <a class="box box8dup" href="pages/box-8.html">untitled</a>
 </main>
 </body>
 </html>
