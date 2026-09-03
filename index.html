@@ -37,10 +37,14 @@
   .lane {
     overflow: hidden;
     width: 100%;
-    flex: 1;
     display: flex;
     align-items: center;
   }
+
+  /* irregular row heights instead of three equal thirds */
+  .lane:nth-child(1) { flex: 0 0 42%; }
+  .lane:nth-child(2) { flex: 0 0 21%; }
+  .lane:nth-child(3) { flex: 0 0 37%; }
 
   .track {
     display: flex;
@@ -87,23 +91,24 @@
   a.box:hover {
     border-color: #888;
     background: #1a1a1a;
+    transform: rotate(0deg) !important;
   }
 
-  /* irregular sizes + irregular gaps, per lane */
-  .lane1 .box:nth-child(4n+1) { width: 26vw; height: 92%; font-size: 1.6rem; margin-right: 2.5vw; }
-  .lane1 .box:nth-child(4n+2) { width: 12vw; height: 55%; font-size: 1rem;   margin-right: 0.8vw; }
-  .lane1 .box:nth-child(4n+3) { width: 18vw; height: 78%; font-size: 1.2rem; margin-right: 3.2vw; }
-  .lane1 .box:nth-child(4n+4) { width: 9vw;  height: 40%; font-size: 0.9rem; margin-right: 1.4vw; }
+  /* irregular sizes, irregular gaps, and hung-frame stagger (off-center + slight tilt), per lane */
+  .lane1 .box:nth-child(4n+1) { width: 27vw; height: 96%; font-size: 1.7rem; margin-right: 2.8vw; align-self: center;    transform: rotate(-1deg); }
+  .lane1 .box:nth-child(4n+2) { width: 10vw; height: 50%; font-size: 0.95rem; margin-right: 0.6vw; align-self: flex-start; transform: rotate(2deg); }
+  .lane1 .box:nth-child(4n+3) { width: 16vw; height: 74%; font-size: 1.15rem; margin-right: 3.6vw; align-self: flex-end;   transform: rotate(-1.5deg); }
+  .lane1 .box:nth-child(4n+4) { width: 7vw;  height: 34%; font-size: 0.8rem;  margin-right: 1.2vw; align-self: center;    transform: rotate(1.5deg); }
 
-  .lane2 .box:nth-child(4n+1) { width: 14vw; height: 60%; font-size: 1.05rem; margin-right: 1vw; }
-  .lane2 .box:nth-child(4n+2) { width: 30vw; height: 88%; font-size: 1.7rem; margin-right: 2vw; }
-  .lane2 .box:nth-child(4n+3) { width: 10vw; height: 35%; font-size: 0.9rem; margin-right: 3vw; }
-  .lane2 .box:nth-child(4n+4) { width: 20vw; height: 70%; font-size: 1.25rem; margin-right: 1.2vw; }
+  .lane2 .box:nth-child(4n+1) { width: 12vw; height: 68%; font-size: 1rem;    margin-right: 0.8vw; align-self: flex-end;   transform: rotate(-2deg); }
+  .lane2 .box:nth-child(4n+2) { width: 24vw; height: 96%; font-size: 1.5rem;  margin-right: 2.4vw; align-self: center;    transform: rotate(1deg); }
+  .lane2 .box:nth-child(4n+3) { width: 8vw;  height: 42%; font-size: 0.8rem;  margin-right: 3.4vw; align-self: flex-start; transform: rotate(2deg); }
+  .lane2 .box:nth-child(4n+4) { width: 15vw; height: 80%; font-size: 1.2rem;  margin-right: 1vw;   align-self: center;    transform: rotate(-1deg); }
 
-  .lane3 .box:nth-child(4n+1) { width: 22vw; height: 82%; font-size: 1.4rem; margin-right: 1.6vw; }
-  .lane3 .box:nth-child(4n+2) { width: 11vw; height: 45%; font-size: 0.95rem; margin-right: 3vw; }
-  .lane3 .box:nth-child(4n+3) { width: 28vw; height: 95%; font-size: 1.6rem; margin-right: 0.9vw; }
-  .lane3 .box:nth-child(4n+4) { width: 13vw; height: 58%; font-size: 1rem;   margin-right: 2.2vw; }
+  .lane3 .box:nth-child(4n+1) { width: 23vw; height: 90%; font-size: 1.5rem;  margin-right: 1.8vw; align-self: flex-start; transform: rotate(1.5deg); }
+  .lane3 .box:nth-child(4n+2) { width: 9vw;  height: 40%; font-size: 0.85rem; margin-right: 3.2vw; align-self: flex-end;   transform: rotate(-2deg); }
+  .lane3 .box:nth-child(4n+3) { width: 29vw; height: 98%; font-size: 1.7rem;  margin-right: 0.7vw; align-self: center;    transform: rotate(-1deg); }
+  .lane3 .box:nth-child(4n+4) { width: 11vw; height: 55%; font-size: 0.95rem; margin-right: 2.6vw; align-self: flex-start; transform: rotate(2deg); }
 </style>
 </head>
 <body>
