@@ -9,7 +9,3 @@
 # drop any site assets (images, gifs, css, etc.) in here — this folder is allowed
 !assets/
 !assets/**
-
-# individual pages the homepage boxes link to
-!pages/
-!pages/**
