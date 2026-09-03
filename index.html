@@ -10,7 +10,7 @@
     margin: 0;
     height: 100%;
     overflow: hidden;
-    background: #0a0a0a;
+    background: #050505;
     color: #e8e8e8;
     font-family: ui-monospace, monospace;
   }
@@ -25,51 +25,25 @@
     letter-spacing: 0.02em;
     z-index: 10;
     pointer-events: none;
+    mix-blend-mode: difference;
   }
 
   main {
     height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .lane {
-    overflow: hidden;
-    width: 100%;
-    flex: 1;
-    display: flex;
-    align-items: center;
-  }
-
-  .track {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    width: max-content;
-    height: 100%;
-    animation: scroll-left 34s linear infinite;
-  }
-
-  .lane.reverse .track {
-    animation-name: scroll-right;
-  }
-
-  .track:hover {
-    animation-play-state: paused;
-  }
-
-  @keyframes scroll-left {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-
-  @keyframes scroll-right {
-    from { transform: translateX(-50%); }
-    to { transform: translateX(0); }
+    width: 100vw;
+    display: grid;
+    gap: 6px;
+    padding: 6px;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    grid-template-areas:
+      "a a b c c c"
+      "a a d d e e"
+      "f f f g g h"
+      "f f f g g h";
   }
 
   a.box {
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -77,74 +51,55 @@
     padding: 1rem;
     color: #e8e8e8;
     text-decoration: none;
-    border: 1px solid #2a2a2a;
-    border-radius: 6px;
+    border: 1px solid #2c2c2c;
     background: #111;
     letter-spacing: 0.01em;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
 
   a.box:hover {
-    border-color: #777;
-    background: #181818;
+    border-color: #888;
+    background: #1a1a1a;
+    transform: scale(0.985);
   }
 
-  /* irregular sizes per box, scaled to viewport so they fill the lane */
-  .lane1 .box:nth-child(4n+1) { width: 26vw; height: 92%; font-size: 1.3rem; }
-  .lane1 .box:nth-child(4n+2) { width: 12vw; height: 55%; font-size: 0.85rem; }
-  .lane1 .box:nth-child(4n+3) { width: 18vw; height: 78%; font-size: 1rem; }
-  .lane1 .box:nth-child(4n+4) { width: 9vw;  height: 40%; font-size: 0.75rem; }
+  .box1 { grid-area: a; font-size: 1.4rem; background: #14110c; }
+  .box2 { grid-area: b; font-size: 0.8rem; background: #0e1211; }
+  .box3 { grid-area: c; font-size: 1rem; background: #11101a; }
+  .box4 { grid-area: d; font-size: 0.85rem; background: #1a1010; }
+  .box5 { grid-area: e; font-size: 0.9rem; background: #0f1620; }
+  .box6 { grid-area: f; font-size: 1.6rem; background: #101a12; }
+  .box7 { grid-area: g; font-size: 1.15rem; background: #1a1508; }
+  .box8 { grid-area: h; font-size: 0.75rem; background: #150c1a; }
 
-  .lane2 .box:nth-child(4n+1) { width: 14vw; height: 60%; font-size: 0.9rem; }
-  .lane2 .box:nth-child(4n+2) { width: 30vw; height: 88%; font-size: 1.4rem; }
-  .lane2 .box:nth-child(4n+3) { width: 10vw; height: 35%; font-size: 0.75rem; }
-  .lane2 .box:nth-child(4n+4) { width: 20vw; height: 70%; font-size: 1.05rem; }
-
-  .lane3 .box:nth-child(4n+1) { width: 22vw; height: 82%; font-size: 1.2rem; }
-  .lane3 .box:nth-child(4n+2) { width: 11vw; height: 45%; font-size: 0.8rem; }
-  .lane3 .box:nth-child(4n+3) { width: 28vw; height: 95%; font-size: 1.35rem; }
-  .lane3 .box:nth-child(4n+4) { width: 13vw; height: 58%; font-size: 0.9rem; }
+  @media (max-width: 700px) {
+    main {
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      grid-template-areas:
+        "a a"
+        "a a"
+        "b c"
+        "d e"
+        "f f"
+        "f f"
+        "g h"
+        "g h";
+    }
+  }
 </style>
 </head>
 <body>
 <header>planet.planet</header>
 <main>
-  <div class="lane">
-    <div class="track lane1">
-      <a class="box" href="pages/box-1.html">untitled</a>
-      <a class="box" href="pages/box-2.html">untitled</a>
-      <a class="box" href="pages/box-3.html">untitled</a>
-      <a class="box" href="pages/box-4.html">untitled</a>
-      <a class="box" href="pages/box-1.html">untitled</a>
-      <a class="box" href="pages/box-2.html">untitled</a>
-      <a class="box" href="pages/box-3.html">untitled</a>
-      <a class="box" href="pages/box-4.html">untitled</a>
-    </div>
-  </div>
-  <div class="lane reverse">
-    <div class="track lane2">
-      <a class="box" href="pages/box-5.html">untitled</a>
-      <a class="box" href="pages/box-6.html">untitled</a>
-      <a class="box" href="pages/box-7.html">untitled</a>
-      <a class="box" href="pages/box-8.html">untitled</a>
-      <a class="box" href="pages/box-5.html">untitled</a>
-      <a class="box" href="pages/box-6.html">untitled</a>
-      <a class="box" href="pages/box-7.html">untitled</a>
-      <a class="box" href="pages/box-8.html">untitled</a>
-    </div>
-  </div>
-  <div class="lane">
-    <div class="track lane3">
-      <a class="box" href="pages/box-1.html">untitled</a>
-      <a class="box" href="pages/box-3.html">untitled</a>
-      <a class="box" href="pages/box-5.html">untitled</a>
-      <a class="box" href="pages/box-7.html">untitled</a>
-      <a class="box" href="pages/box-1.html">untitled</a>
-      <a class="box" href="pages/box-3.html">untitled</a>
-      <a class="box" href="pages/box-5.html">untitled</a>
-      <a class="box" href="pages/box-7.html">untitled</a>
-    </div>
-  </div>
+  <a class="box box1" href="pages/box-1.html">untitled</a>
+  <a class="box box2" href="pages/box-2.html">untitled</a>
+  <a class="box box3" href="pages/box-3.html">untitled</a>
+  <a class="box box4" href="pages/box-4.html">untitled</a>
+  <a class="box box5" href="pages/box-5.html">untitled</a>
+  <a class="box box6" href="pages/box-6.html">untitled</a>
+  <a class="box box7" href="pages/box-7.html">untitled</a>
+  <a class="box box8" href="pages/box-8.html">untitled</a>
 </main>
 </body>
 </html>
