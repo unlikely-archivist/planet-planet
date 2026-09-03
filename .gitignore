@@ -9,3 +9,7 @@
 # drop any site assets (images, gifs, css, etc.) in here — this folder is allowed
 !assets/
 !assets/**
+
+# site pages
+!films/
+!films/**

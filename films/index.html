@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>films — planet.planet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { margin: 0; min-height: 100vh; background: #0a0a0a; color: #e8e8e8;
+         font-family: ui-monospace, monospace; }
+  a.back { position: fixed; top: 1.5rem; left: 1.5rem; color: #888; text-decoration: none; font-size: 0.9rem; }
+  a.back:hover { color: #e8e8e8; }
+  header { position: fixed; top: 1.5rem; right: 1.5rem; }
+  header h1 { margin: 0; font-size: 1.1rem; font-weight: 400; letter-spacing: 0.02em; }
+
+  .gallery { padding: 6rem 2rem 4rem; display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; }
+
+  .card {
+    position: relative; width: 260px; height: 146px; overflow: hidden;
+    border-radius: 2px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    cursor: default;
+  }
+  .card img { width: 100%; height: 100%; object-fit: cover; object-position: center 35%; display: block; }
+  .card .placeholder {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    background: #1c1c1c; color: #444; font-size: 0.75rem; text-align: center; padding: 0.5rem; box-sizing: border-box;
+  }
+  .card .overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.82);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 1rem; box-sizing: border-box;
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  .card:hover .overlay { opacity: 1; }
+  .overlay .title { font-size: 0.95rem; margin-bottom: 0.4rem; }
+  .overlay .meta { font-size: 0.75rem; color: #aaa; line-height: 1.5; }
+</style>
+</head>
+<body>
+<a class="back" href="../">← planet.planet</a>
+<header><h1>films</h1></header>
+
+<div class="gallery" id="gallery"></div>
+
+<script>
+  // edit this list to add/remove films. image: path to a screenshot, or leave blank for a placeholder.
+  const films = [
+    { title: "The Piano Teacher", year: 2001, director: "Michael Haneke", country: "Austria", image: "images/piano-teacher.webp" },
+    { title: "Benny's Video", year: 1992, director: "Michael Haneke", country: "Austria", image: "images/bennys-video.png" },
+    { title: "Finders Keepers", year: 2015, director: "Bryan Carberry & Clay Tweel", country: "USA", image: "images/finders-keepers.png" },
+    { title: "I Think This Is the Closest to How the Footage Looked", year: 2012, director: "Yuval Hameiri & Michal Vaknin", country: "Israel", image: "images/i-think-this-is.png" },
+    { title: "Mallrats", year: 1995, director: "Kevin Smith", country: "USA", image: "images/1118full-mallrats-screenshot-2253177793.jpg" },
+    { title: "Anatomy of Hell", year: 2004, director: "Catherine Breillat", country: "France", image: "images/anatomy-of-hell.webp" },
+    { title: "Rocky Horror Picture Show", year: 1975, director: "Jim Sharman", country: "UK", image: "images/rocky-horror.jpg" },
+    { title: "Little Shop of Horrors", year: 1986, director: "Frank Oz", country: "USA", image: "images/little-shop.webp" },
+    { title: "Fat Girl", year: 2001, director: "Catherine Breillat", country: "France", image: "images/fat-girl.webp" },
+    { title: "Dogtooth", year: 2009, director: "Yorgos Lanthimos", country: "Greece", image: "images/image.png" },
+    { title: "Romance", year: 1999, director: "Catherine Breillat", country: "France", image: "images/romance.webp" },
+    { title: "Tickled", year: 2016, director: "David Farrier & Dylan Reeve", country: "New Zealand", image: "" },
+    { title: "American Movie", year: 1999, director: "Chris Smith", country: "USA", image: "" },
+    { title: "Meshes of the Afternoon", year: 1943, director: "Maya Deren & Alexander Hammid", country: "USA", image: "images/meshes.webp" },
+    { title: "Eraserhead", year: 1977, director: "David Lynch", country: "USA", image: "images/eraserhead.webp" },
+    { title: "Tommy", year: 1975, director: "Ken Russell", country: "UK", image: "" },
+    { title: "Videodrome", year: 1983, director: "David Cronenberg", country: "Canada", image: "images/videodrome.webp" },
+    { title: "The King of Kong", year: 2007, director: "Seth Gordon", country: "USA", image: "" },
+    { title: "The Jinx", year: 2015, director: "Andrew Jarecki", country: "USA", image: "" },
+    { title: "Jesus Camp", year: 2006, director: "Heidi Ewing & Rachel Grady", country: "USA", image: "" },
+    { title: "Tiger King", year: 2020, director: "Eric Goode & Rebecca Chaiklin", country: "USA", image: "" },
+    { title: "Searching for Sugar Man", year: 2012, director: "Malik Bendjelloul", country: "Sweden/UK", image: "" },
+    { title: "Paris Is Burning", year: 1990, director: "Jennie Livingston", country: "USA", image: "images/paris-is-burning.webp" },
+    { title: "Class Action Park", year: 2020, director: "Chris Charles Scott III & Seth Porges", country: "USA", image: "" },
+    { title: "Telemarketers", year: 2023, director: "Sam Lipman-Stern, Adam Bhala Lough & Sam Lawrence Kramer", country: "USA", image: "" },
+  ];
+
+  const gallery = document.getElementById("gallery");
+  films.forEach(f => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = f.image
+      ? `<img src="${f.image}" alt="${f.title}">`
+      : `<div class="placeholder">${f.title}</div>`;
+
+    card.innerHTML += `
+      <div class="overlay">
+        <div class="title">${f.title}</div>
+        <div class="meta">${f.year}<br>${f.director}<br>${f.country}</div>
+      </div>`;
+
+    gallery.appendChild(card);
+  });
+</script>
+</body>
+</html>
