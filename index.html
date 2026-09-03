@@ -30,30 +30,46 @@
 
   main {
     height: 100vh;
-    width: 200vw;
-    display: grid;
-    gap: 6px;
-    padding: 6px;
-    grid-template-columns: repeat(12, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    grid-template-areas:
-      "a a b c c c A A B C C C"
-      "a a d d e e A A D D E E"
-      "f f f g g h F F F G G H"
-      "f f f g g h F F F G G H";
-    animation: scroll-wall 42s linear infinite;
+    display: flex;
+    flex-direction: column;
   }
 
-  main:hover {
+  .lane {
+    overflow: hidden;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    height: 100%;
+    animation: scroll-left 34s linear infinite;
+  }
+
+  .lane.reverse .track {
+    animation-name: scroll-right;
+  }
+
+  .track:hover {
     animation-play-state: paused;
   }
 
-  @keyframes scroll-wall {
+  @keyframes scroll-left {
     from { transform: translateX(0); }
-    to   { transform: translateX(-100vw); }
+    to { transform: translateX(-50%); }
+  }
+
+  @keyframes scroll-right {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0); }
   }
 
   a.box {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -62,6 +78,7 @@
     color: #e8e8e8;
     text-decoration: none;
     border: 1px solid #2c2c2c;
+    border-radius: 6px;
     background: #111;
     letter-spacing: 0.01em;
     transition: border-color 0.15s ease, background 0.15s ease;
@@ -72,44 +89,62 @@
     background: #1a1a1a;
   }
 
-  .box1 { grid-area: a; font-size: 1.4rem; background: #14110c; }
-  .box2 { grid-area: b; font-size: 0.8rem; background: #0e1211; }
-  .box3 { grid-area: c; font-size: 1rem; background: #11101a; }
-  .box4 { grid-area: d; font-size: 0.85rem; background: #1a1010; }
-  .box5 { grid-area: e; font-size: 0.9rem; background: #0f1620; }
-  .box6 { grid-area: f; font-size: 1.6rem; background: #101a12; }
-  .box7 { grid-area: g; font-size: 1.15rem; background: #1a1508; }
-  .box8 { grid-area: h; font-size: 0.75rem; background: #150c1a; }
+  /* irregular sizes + irregular gaps, per lane */
+  .lane1 .box:nth-child(4n+1) { width: 26vw; height: 92%; font-size: 1.6rem; margin-right: 2.5vw; }
+  .lane1 .box:nth-child(4n+2) { width: 12vw; height: 55%; font-size: 1rem;   margin-right: 0.8vw; }
+  .lane1 .box:nth-child(4n+3) { width: 18vw; height: 78%; font-size: 1.2rem; margin-right: 3.2vw; }
+  .lane1 .box:nth-child(4n+4) { width: 9vw;  height: 40%; font-size: 0.9rem; margin-right: 1.4vw; }
 
-  .box1dup { grid-area: A; font-size: 1.4rem; background: #14110c; }
-  .box2dup { grid-area: B; font-size: 0.8rem; background: #0e1211; }
-  .box3dup { grid-area: C; font-size: 1rem; background: #11101a; }
-  .box4dup { grid-area: D; font-size: 0.85rem; background: #1a1010; }
-  .box5dup { grid-area: E; font-size: 0.9rem; background: #0f1620; }
-  .box6dup { grid-area: F; font-size: 1.6rem; background: #101a12; }
-  .box7dup { grid-area: G; font-size: 1.15rem; background: #1a1508; }
-  .box8dup { grid-area: H; font-size: 0.75rem; background: #150c1a; }
+  .lane2 .box:nth-child(4n+1) { width: 14vw; height: 60%; font-size: 1.05rem; margin-right: 1vw; }
+  .lane2 .box:nth-child(4n+2) { width: 30vw; height: 88%; font-size: 1.7rem; margin-right: 2vw; }
+  .lane2 .box:nth-child(4n+3) { width: 10vw; height: 35%; font-size: 0.9rem; margin-right: 3vw; }
+  .lane2 .box:nth-child(4n+4) { width: 20vw; height: 70%; font-size: 1.25rem; margin-right: 1.2vw; }
+
+  .lane3 .box:nth-child(4n+1) { width: 22vw; height: 82%; font-size: 1.4rem; margin-right: 1.6vw; }
+  .lane3 .box:nth-child(4n+2) { width: 11vw; height: 45%; font-size: 0.95rem; margin-right: 3vw; }
+  .lane3 .box:nth-child(4n+3) { width: 28vw; height: 95%; font-size: 1.6rem; margin-right: 0.9vw; }
+  .lane3 .box:nth-child(4n+4) { width: 13vw; height: 58%; font-size: 1rem;   margin-right: 2.2vw; }
 </style>
 </head>
 <body>
 <header>planet.planet</header>
 <main>
-  <a class="box box1" href="pages/box-1.html">untitled</a>
-  <a class="box box2" href="pages/box-2.html">untitled</a>
-  <a class="box box3" href="pages/box-3.html">untitled</a>
-  <a class="box box4" href="pages/box-4.html">untitled</a>
-  <a class="box box5" href="pages/box-5.html">untitled</a>
-  <a class="box box6" href="pages/box-6.html">untitled</a>
-  <a class="box box7" href="pages/box-7.html">untitled</a>
-  <a class="box box8" href="pages/box-8.html">untitled</a>
-  <a class="box box1dup" href="pages/box-1.html">untitled</a>
-  <a class="box box2dup" href="pages/box-2.html">untitled</a>
-  <a class="box box3dup" href="pages/box-3.html">untitled</a>
-  <a class="box box4dup" href="pages/box-4.html">untitled</a>
-  <a class="box box5dup" href="pages/box-5.html">untitled</a>
-  <a class="box box6dup" href="pages/box-6.html">untitled</a>
-  <a class="box box7dup" href="pages/box-7.html">untitled</a>
-  <a class="box box8dup" href="pages/box-8.html">untitled</a>
+  <div class="lane">
+    <div class="track lane1">
+      <a class="box" href="pages/box-1.html">1</a>
+      <a class="box" href="pages/box-2.html">2</a>
+      <a class="box" href="pages/box-3.html">3</a>
+      <a class="box" href="pages/box-4.html">4</a>
+      <a class="box" href="pages/box-1.html">1</a>
+      <a class="box" href="pages/box-2.html">2</a>
+      <a class="box" href="pages/box-3.html">3</a>
+      <a class="box" href="pages/box-4.html">4</a>
+    </div>
+  </div>
+  <div class="lane reverse">
+    <div class="track lane2">
+      <a class="box" href="pages/box-5.html">5</a>
+      <a class="box" href="pages/box-6.html">6</a>
+      <a class="box" href="pages/box-7.html">7</a>
+      <a class="box" href="pages/box-8.html">8</a>
+      <a class="box" href="pages/box-5.html">5</a>
+      <a class="box" href="pages/box-6.html">6</a>
+      <a class="box" href="pages/box-7.html">7</a>
+      <a class="box" href="pages/box-8.html">8</a>
+    </div>
+  </div>
+  <div class="lane">
+    <div class="track lane3">
+      <a class="box" href="pages/box-1.html">1</a>
+      <a class="box" href="pages/box-3.html">3</a>
+      <a class="box" href="pages/box-5.html">5</a>
+      <a class="box" href="pages/box-7.html">7</a>
+      <a class="box" href="pages/box-1.html">1</a>
+      <a class="box" href="pages/box-3.html">3</a>
+      <a class="box" href="pages/box-5.html">5</a>
+      <a class="box" href="pages/box-7.html">7</a>
+    </div>
+  </div>
 </main>
 </body>
 </html>
