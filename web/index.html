@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>web — planet.planet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0a0a; color: #e8e8e8;
+         font-family: ui-monospace, monospace; overflow: hidden; }
+  a.back { position: fixed; top: 1.5rem; left: 1.5rem; color: #888; text-decoration: none; font-size: 0.9rem; z-index: 10; }
+  a.back:hover { color: #e8e8e8; }
+  header { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 10; text-align: right; }
+  header h1 { margin: 0; font-size: 1.1rem; font-weight: 400; letter-spacing: 0.02em; }
+  header p { margin: 0.3rem 0 0; font-size: 0.7rem; color: #666; max-width: 220px; }
+
+  .legend { position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 10; font-size: 0.75rem; color: #999; display: flex; flex-direction: column; gap: 0.35rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.5rem; }
+  .legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  #card {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 10;
+    background: rgba(20,20,20,0.92); border: 1px solid #2a2a2a; border-radius: 4px;
+    padding: 0.9rem 1.1rem; max-width: 260px; font-size: 0.8rem; line-height: 1.5;
+    display: none;
+  }
+  #card .title { font-size: 0.95rem; margin-bottom: 0.3rem; }
+  #card .meta { color: #999; font-size: 0.72rem; }
+  #card .tags { margin-top: 0.5rem; color: #6a9; font-size: 0.7rem; }
+
+  canvas { display: block; cursor: grab; }
+  canvas.dragging { cursor: grabbing; }
+</style>
+</head>
+<body>
+<a class="back" href="../">← planet.planet</a>
+<header>
+  <h1>web</h1>
+  <p>films, artists, music, books — linked by whatever connects them. drag nodes, click to focus.</p>
+</header>
+<div class="legend" id="legend"></div>
+<div id="card"></div>
+<canvas id="c"></canvas>
+
+<script>
+// ---- data ----------------------------------------------------------------
+// each node: id, type, title, meta (short subtitle string), tags (array — shared tags create links)
+// add artists/music/books here as they come up. tags can be anything: director name,
+// genre, mood, decade, "influenced-by:X" — anything shared across nodes will link them.
+
+const TYPE_COLOR = {
+  film:   "#e86a6a",
+  artist: "#e8c26a",
+  music:  "#6ae8c2",
+  book:   "#6a9ee8",
+};
+
+const nodes = [
+  // --- films (seeded from films/index.html) ---
+  { id: "piano-teacher", type: "film", title: "The Piano Teacher", meta: "2001 · Michael Haneke", tags: ["haneke", "austria", "2000s"] },
+  { id: "bennys-video", type: "film", title: "Benny's Video", meta: "1992 · Michael Haneke", tags: ["haneke", "austria", "90s"] },
+  { id: "finders-keepers", type: "film", title: "Finders Keepers", meta: "2015 · Carberry & Tweel", tags: ["documentary", "usa", "2010s"] },
+  { id: "closest-footage", type: "film", title: "I Think This Is the Closest to How the Footage Looked", meta: "2012 · Hameiri & Vaknin", tags: ["documentary", "israel", "2010s"] },
+  { id: "mallrats", type: "film", title: "Mallrats", meta: "1995 · Kevin Smith", tags: ["comedy", "usa", "90s"] },
+  { id: "anatomy-hell", type: "film", title: "Anatomy of Hell", meta: "2004 · Catherine Breillat", tags: ["breillat", "france", "2000s"] },
+  { id: "rocky-horror", type: "film", title: "Rocky Horror Picture Show", meta: "1975 · Jim Sharman", tags: ["musical", "uk", "70s", "cult"] },
+  { id: "little-shop", type: "film", title: "Little Shop of Horrors", meta: "1986 · Frank Oz", tags: ["musical", "usa", "80s", "cult"] },
+  { id: "fat-girl", type: "film", title: "Fat Girl", meta: "2001 · Catherine Breillat", tags: ["breillat", "france", "2000s"] },
+  { id: "dogtooth", type: "film", title: "Dogtooth", meta: "2009 · Yorgos Lanthimos", tags: ["greece", "2000s"] },
+  { id: "romance", type: "film", title: "Romance", meta: "1999 · Catherine Breillat", tags: ["breillat", "france", "90s"] },
+  { id: "tickled", type: "film", title: "Tickled", meta: "2016 · Farrier & Reeve", tags: ["documentary", "new zealand", "2010s"] },
+  { id: "american-movie", type: "film", title: "American Movie", meta: "1999 · Chris Smith", tags: ["documentary", "usa", "90s"] },
+  { id: "meshes", type: "film", title: "Meshes of the Afternoon", meta: "1943 · Deren & Hammid", tags: ["usa", "experimental"] },
+  { id: "eraserhead", type: "film", title: "Eraserhead", meta: "1977 · David Lynch", tags: ["usa", "70s", "cult", "experimental"] },
+  { id: "tommy", type: "film", title: "Tommy", meta: "1975 · Ken Russell", tags: ["musical", "uk", "70s", "cult"] },
+  { id: "videodrome", type: "film", title: "Videodrome", meta: "1983 · David Cronenberg", tags: ["canada", "80s", "cult"] },
+  { id: "king-of-kong", type: "film", title: "The King of Kong", meta: "2007 · Seth Gordon", tags: ["documentary", "usa", "2000s"] },
+  { id: "jinx", type: "film", title: "The Jinx", meta: "2015 · Andrew Jarecki", tags: ["documentary", "usa", "2010s"] },
+  { id: "jesus-camp", type: "film", title: "Jesus Camp", meta: "2006 · Ewing & Grady", tags: ["documentary", "usa", "2000s"] },
+  { id: "tiger-king", type: "film", title: "Tiger King", meta: "2020 · Goode & Chaiklin", tags: ["documentary", "usa", "2020s"] },
+  { id: "sugar-man", type: "film", title: "Searching for Sugar Man", meta: "2012 · Malik Bendjelloul", tags: ["documentary", "sweden/uk", "2010s"] },
+  { id: "paris-burning", type: "film", title: "Paris Is Burning", meta: "1990 · Jennie Livingston", tags: ["documentary", "usa", "90s"] },
+  { id: "class-action-park", type: "film", title: "Class Action Park", meta: "2020 · Scott III & Porges", tags: ["documentary", "usa", "2020s"] },
+  { id: "telemarketers", type: "film", title: "Telemarketers", meta: "2023 · Lipman-Stern, Lough & Kramer", tags: ["documentary", "usa", "2020s"] },
+
+  // --- artists, music, books: empty for now. add nodes like the films above, e.g.:
+  // { id: "some-artist", type: "artist", title: "Name", meta: "short line", tags: ["shared-tag"] },
+];
+
+const manualLinks = [
+  // pairs of ids to force-connect even without shared tags, e.g. ["piano-teacher", "some-book"]
+];
+
+// ---- graph build -----------------------------------------------------------
+const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+const links = [];
+const seen = new Set();
+function addLink(a, b, weight) {
+  const key = a < b ? a + "|" + b : b + "|" + a;
+  if (seen.has(key) || a === b) return;
+  seen.add(key);
+  links.push({ source: a, target: b, weight });
+}
+for (let i = 0; i < nodes.length; i++) {
+  for (let j = i + 1; j < nodes.length; j++) {
+    const shared = nodes[i].tags.filter(t => nodes[j].tags.includes(t));
+    if (shared.length) addLink(nodes[i].id, nodes[j].id, shared.length);
+  }
+}
+manualLinks.forEach(([a, b]) => addLink(a, b, 2));
+
+// legend
+const legend = document.getElementById("legend");
+Object.entries(TYPE_COLOR).forEach(([type, color]) => {
+  const el = document.createElement("span");
+  el.innerHTML = `<i style="background:${color}"></i>${type}`;
+  legend.appendChild(el);
+});
+
+// ---- physics sim -------------------------------------------------------
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+let W, H;
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+resize();
+addEventListener("resize", resize);
+
+nodes.forEach(n => {
+  n.x = W / 2 + (Math.random() - 0.5) * 400;
+  n.y = H / 2 + (Math.random() - 0.5) * 400;
+  n.vx = 0; n.vy = 0;
+  n.r = 5 + Math.min(6, links.filter(l => l.source === n.id || l.target === n.id).length);
+});
+
+let focusId = null, dragNode = null, hoverNode = null;
+let mouseX = 0, mouseY = 0;
+
+function degree(id) {
+  return links.filter(l => l.source === id || l.target === id).length;
+}
+
+function step() {
+  const REPULSE = 1800, SPRING = 0.02, SPRING_LEN = 90, CENTER = 0.002, DAMP = 0.85;
+  for (let i = 0; i < nodes.length; i++) {
+    const a = nodes[i];
+    let fx = (W / 2 - a.x) * CENTER, fy = (H / 2 - a.y) * CENTER;
+    for (let j = 0; j < nodes.length; j++) {
+      if (i === j) continue;
+      const b = nodes[j];
+      let dx = a.x - b.x, dy = a.y - b.y;
+      let dist2 = dx * dx + dy * dy || 0.01;
+      let dist = Math.sqrt(dist2);
+      let f = REPULSE / dist2;
+      fx += (dx / dist) * f;
+      fy += (dy / dist) * f;
+    }
+    a.fx = fx; a.fy = fy;
+  }
+  links.forEach(l => {
+    const a = byId[l.source], b = byId[l.target];
+    let dx = b.x - a.x, dy = b.y - a.y;
+    let dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+    let f = (dist - SPRING_LEN) * SPRING;
+    const fx = (dx / dist) * f, fy = (dy / dist) * f;
+    a.fx += fx; a.fy += fy;
+    b.fx -= fx; b.fy -= fy;
+  });
+  nodes.forEach(n => {
+    if (n === dragNode) return;
+    n.vx = (n.vx + n.fx) * DAMP;
+    n.vy = (n.vy + n.fy) * DAMP;
+    n.x += n.vx;
+    n.y += n.vy;
+  });
+}
+
+function connectedTo(id) {
+  const s = new Set([id]);
+  links.forEach(l => {
+    if (l.source === id) s.add(l.target);
+    if (l.target === id) s.add(l.source);
+  });
+  return s;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const activeId = focusId || (hoverNode && hoverNode.id);
+  const active = activeId ? connectedTo(activeId) : null;
+
+  links.forEach(l => {
+    const a = byId[l.source], b = byId[l.target];
+    const dim = active && !(active.has(a.id) && active.has(b.id));
+    ctx.strokeStyle = dim ? "rgba(120,120,120,0.07)" : "rgba(200,200,200,0.35)";
+    ctx.lineWidth = Math.min(2, 0.5 + l.weight * 0.3);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  });
+
+  nodes.forEach(n => {
+    const dim = active && !active.has(n.id);
+    ctx.globalAlpha = dim ? 0.25 : 1;
+    ctx.fillStyle = TYPE_COLOR[n.type] || "#aaa";
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fill();
+    if (!dim && (n === hoverNode || active)) {
+      ctx.font = "11px ui-monospace, monospace";
+      ctx.fillStyle = "#e8e8e8";
+      ctx.fillText(n.title, n.x + n.r + 6, n.y + 4);
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+
+function loop() { step(); draw(); requestAnimationFrame(loop); }
+loop();
+
+// ---- interaction ---------------------------------------------------------
+function nodeAt(x, y) {
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const n = nodes[i];
+    const dx = x - n.x, dy = y - n.y;
+    if (dx * dx + dy * dy <= (n.r + 4) * (n.r + 4)) return n;
+  }
+  return null;
+}
+
+const card = document.getElementById("card");
+function showCard(n) {
+  if (!n) { card.style.display = "none"; return; }
+  card.style.display = "block";
+  card.innerHTML = `<div class="title">${n.title}</div><div class="meta">${n.meta}</div><div class="tags">${n.tags.join(" · ")}</div>`;
+}
+
+canvas.addEventListener("mousemove", e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  if (dragNode) {
+    dragNode.x = mouseX; dragNode.y = mouseY;
+    dragNode.vx = 0; dragNode.vy = 0;
+    return;
+  }
+  hoverNode = nodeAt(mouseX, mouseY);
+  canvas.style.cursor = hoverNode ? "pointer" : "grab";
+  if (hoverNode) showCard(hoverNode); else if (!focusId) showCard(null);
+});
+canvas.addEventListener("mousedown", e => {
+  const n = nodeAt(e.clientX, e.clientY);
+  if (n) { dragNode = n; canvas.classList.add("dragging"); }
+});
+addEventListener("mouseup", () => { dragNode = null; canvas.classList.remove("dragging"); });
+canvas.addEventListener("click", e => {
+  const n = nodeAt(e.clientX, e.clientY);
+  if (n) { focusId = focusId === n.id ? null : n.id; showCard(n); }
+  else { focusId = null; showCard(null); }
+});
+</script>
+</body>
+</html>
