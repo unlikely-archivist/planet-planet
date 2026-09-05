@@ -34,9 +34,12 @@
     border: 1px solid var(--faint); cursor: pointer; transition: transform .15s;
   }
   #drawer img:hover { transform: translateY(-3px); border-color: rgba(207,198,180,.7); }
+  a.back { position: fixed; top: 1.5rem; left: 1.5rem; color: var(--faint); text-decoration: none; font-size: 0.9rem; font-family: ui-monospace, monospace; }
+  a.back:hover { color: var(--ink); }
 </style>
 </head>
 <body>
+<a class="back" href="../">← planet.planet</a>
 <h1>The Lepidoptarium</h1>
 <div class="sub">an infinite drawer of impossible moths</div>
 <canvas id="plate"></canvas>
