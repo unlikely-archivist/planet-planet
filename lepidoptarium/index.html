@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lepidoptarium</title>
+<style>
+  :root { --ink: #cfc6b4; --faint: rgba(207,198,180,.35); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0c0b0a; color: var(--ink);
+    font-family: Georgia, "Times New Roman", serif;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; padding: 34px 16px 60px;
+  }
+  h1 { font-weight: normal; font-size: 21px; letter-spacing: 7px; text-transform: uppercase; }
+  .sub { font-style: italic; font-size: 13px; color: rgba(207,198,180,.55); margin: 8px 0 24px; }
+  canvas#plate { cursor: pointer; box-shadow: 0 20px 60px rgba(0,0,0,.7); border-radius: 2px; }
+  .controls { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; justify-content: center; }
+  button {
+    background: transparent; color: var(--ink); border: 1px solid var(--faint);
+    font-family: Georgia, serif; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    padding: 9px 20px; cursor: pointer; transition: border-color .2s, background .2s;
+  }
+  button:hover { border-color: rgba(207,198,180,.8); background: rgba(255,255,255,.04); }
+  .hint { font-size: 11px; font-style: italic; color: rgba(207,198,180,.4); margin-top: 14px; }
+  #drawer {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    margin-top: 26px; max-width: 740px;
+  }
+  #drawer .empty { font-size: 12px; font-style: italic; color: rgba(207,198,180,.35); }
+  #drawer img {
+    height: 96px; width: auto; padding: 3px; background: #131110;
+    border: 1px solid var(--faint); cursor: pointer; transition: transform .15s;
+  }
+  #drawer img:hover { transform: translateY(-3px); border-color: rgba(207,198,180,.7); }
+</style>
+</head>
+<body>
+<h1>The Lepidoptarium</h1>
+<div class="sub">an infinite drawer of impossible moths</div>
+<canvas id="plate"></canvas>
+<div class="controls">
+  <button id="btnNew">New specimen</button>
+  <button id="btnPin">Pin to drawer</button>
+  <button id="btnSave">Download PNG</button>
+</div>
+<div class="hint">click the plate or press space to collect another · click a pinned moth to download it</div>
+<div id="drawer"><span class="empty">pinned specimens appear here</span></div>
+
+<script>
+(() => {
+  const W = 720, H = 820, CX = 360, HALF_W = 360;
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const plate = document.getElementById('plate');
+  plate.width = W * DPR; plate.height = H * DPR;
+  plate.style.width = W + 'px'; plate.style.height = H + 'px';
+  const ctx = plate.getContext('2d');
+
+  // seeded rng so wings, patterns, and name all come from one specimen number
+  function mulberry32(a) {
+    return function() {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+
+  const PALETTES = [
+    { base: ['#e7dfc9', '#c6b891'], band: '#6f5a3e', accent: '#a3402f', spot: '#2f2a24', body: '#3a332b' },
+    { base: ['#7a3540', '#4a1f27'], band: '#d8c9b0', accent: '#c98f5f', spot: '#1d1416', body: '#2a1b1e' },
+    { base: ['#6d7484', '#464c59'], band: '#d5d0c4', accent: '#b08d54', spot: '#22242b', body: '#2b2d33' },
+    { base: ['#5f6a49', '#3c4430'], band: '#cdbb8a', accent: '#8a4a33', spot: '#20241a', body: '#2c3024' },
+    { base: ['#6a5975', '#42374b'], band: '#c9bfa8', accent: '#a67f9e', spot: '#241f29', body: '#2b2530' },
+    { base: ['#c09a4f', '#8a6930'], band: '#3d2f1c', accent: '#e3d3ae', spot: '#241c10', body: '#33270f' },
+    { base: ['#dbd9d3', '#a8a49a'], band: '#757167', accent: '#a08a6a', spot: '#33302a', body: '#4a463f' },
+    { base: ['#42434a', '#28282d'], band: '#b8b2a4', accent: '#7d3b34', spot: '#141417', body: '#1c1c20' },
+  ];
+
+  const GEN_A = ['Ache', 'Noct', 'Vesp', 'Umbr', 'Cal', 'Mor', 'Than', 'Lun', 'Oph', 'Sel', 'Nyx', 'Ereb', 'Mel', 'Ost'];
+  const GEN_B = ['rontia', 'ilia', 'erana', 'osoma', 'yptera', 'antha', 'essa', 'ura', 'elia', 'ophane'];
+  const SP_A = ['velut', 'funer', 'lumin', 'obscur', 'reliqu', 'tenebr', 'argent', 'sepulcr', 'crepusc', 'ferrug'];
+  const SP_B = ['ina', 'alis', 'ata', 'osa', 'ella', 'ica'];
+  const ADJ = ['Veiled', 'Mourning', 'Wrought-Iron', 'Paper', 'Hollow', 'Vesper', 'Salt-Kissed', 'Candle-Drunk', 'Ironlace', 'Twice-Pinned', 'Hymnal', 'Levee', 'Creole', 'Garden-District', 'Bywater'];
+  const NOUN = ['Sorrow', 'Reliquary', 'Archivist', 'Widow', 'Lantern', 'Requiem', 'Parish', 'Curfew', 'Sacrament', 'Procession', 'Séance', 'Vigil'];
+  const ROMAN = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii'];
+
+  function makeLayer() {
+    const c = document.createElement('canvas');
+    c.width = W * DPR; c.height = H * DPR;
+    const x = c.getContext('2d');
+    x.setTransform(DPR, 0, 0, DPR, 0, 0);
+    return [c, x];
+  }
+
+  // ---- wing half: everything right of the body's midline, mirrored at composite time ----
+  function renderHalf(r, pal) {
+    const c = document.createElement('canvas');
+    c.width = HALF_W * DPR; c.height = H * DPR;
+    const x = c.getContext('2d');
+    x.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    const spanF = 200 + r() * 115;
+    const tipY = 150 + r() * 70;
+    const mBotX = 60 + r() * 40, mBotY = 385 + r() * 25;
+
+    const fore = new Path2D();
+    fore.moveTo(4, 258);
+    fore.bezierCurveTo(60, 205, 140, tipY + 20, spanF, tipY);
+    const scallops = 3 + Math.floor(r() * 3);
+    let px = spanF, py = tipY;
+    for (let i = 1; i <= scallops; i++) {
+      const t = i / scallops;
+      const nx = spanF + (mBotX - spanF) * t;
+      const ny = tipY + (mBotY - tipY) * (t * t * 0.4 + t * 0.6);
+      fore.quadraticCurveTo((px + nx) / 2 + 14 + r() * 10, (py + ny) / 2 + 6, nx, ny);
+      px = nx; py = ny;
+    }
+    fore.quadraticCurveTo(30, mBotY + 8, 4, 348);
+    fore.closePath();
+
+    const spanH = spanF * (0.5 + r() * 0.2);
+    const hasTail = r() < 0.3;
+    const hBot = 470 + r() * 60;
+    const hw = new Path2D();
+    hw.moveTo(4, 340);
+    hw.bezierCurveTo(70, 330, spanH, 360 + r() * 30, spanH * 0.9, 430 + r() * 40);
+    if (hasTail) {
+      let tailLen = 90 + r() * 80;
+      if (hBot + tailLen > 655) tailLen = 655 - hBot;
+      const tx = spanH * 0.45;
+      hw.quadraticCurveTo(spanH * 0.75, hBot, tx + 14, hBot + 30);
+      hw.quadraticCurveTo(tx + 20, hBot + tailLen * 0.55, tx + r() * 8 - 2, hBot + tailLen);
+      hw.quadraticCurveTo(tx - 14, hBot + tailLen * 0.5, tx - 18, hBot + 24);
+      hw.quadraticCurveTo(spanH * 0.3, hBot - 6, 4, 452);
+    } else {
+      hw.quadraticCurveTo(spanH * 0.7, hBot, spanH * 0.35, hBot + 10);
+      hw.quadraticCurveTo(spanH * 0.15, hBot, 4, 452);
+    }
+    hw.closePath();
+
+    paintWing(x, hw, r, pal, false, spanH, 340);
+    paintWing(x, fore, r, pal, true, spanF, tipY);
+    return c;
+  }
+
+  function paintWing(x, path, r, pal, isFore, span, tipY) {
+    x.save();
+    x.clip(path);
+    const g = x.createLinearGradient(0, 200, span, 430);
+    g.addColorStop(0, pal.base[0]);
+    g.addColorStop(1, pal.base[1]);
+    x.fillStyle = g;
+    x.fillRect(0, 0, HALF_W, H);
+
+    // contour bands: arcs swung from the wing root
+    const nb = 2 + Math.floor(r() * 3);
+    for (let i = 0; i < nb; i++) {
+      x.beginPath();
+      x.arc(4, 330, span * (0.35 + i * 0.2 + r() * 0.08), -1.4, 0.9);
+      x.strokeStyle = pal.band;
+      x.globalAlpha = 0.25 + r() * 0.3;
+      x.lineWidth = 6 + r() * 14;
+      x.stroke();
+    }
+    x.beginPath();
+    x.arc(4, 330, span * (0.5 + r() * 0.25), -1.3, 0.8);
+    x.strokeStyle = pal.accent;
+    x.globalAlpha = 0.3;
+    x.lineWidth = 3 + r() * 5;
+    x.stroke();
+
+    // darkened outer margin
+    x.globalAlpha = 0.22;
+    x.strokeStyle = pal.band;
+    x.lineWidth = 18;
+    x.stroke(path);
+
+    // veins fanning from the root
+    x.globalAlpha = 0.13;
+    x.strokeStyle = pal.spot;
+    x.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      const t = i / 5;
+      x.beginPath();
+      x.moveTo(8, 300 + (isFore ? 0 : 60));
+      x.quadraticCurveTo(span * 0.4, 330 - (330 - tipY) * t * 0.8, span * (1 - 0.45 * t), tipY + (395 - tipY) * t);
+      x.stroke();
+    }
+
+    // speckle dust
+    const nd = 100 + Math.floor(r() * 140);
+    x.fillStyle = pal.spot;
+    for (let i = 0; i < nd; i++) {
+      x.globalAlpha = 0.05 + r() * 0.22;
+      x.beginPath();
+      x.arc(r() * span, (isFore ? tipY - 20 : 330) + r() * (isFore ? 520 - tipY : 260), 0.5 + r() * 1.8, 0, 7);
+      x.fill();
+    }
+
+    if (isFore ? r() < 0.75 : r() < 0.3) {
+      const ex = span * 0.52 + r() * span * 0.1;
+      const ey = isFore ? tipY + (330 - tipY) * 0.55 : 420 + r() * 40;
+      const r0 = 10 + r() * 13;
+      x.globalAlpha = 1;
+      const ring = (rad, col) => { x.beginPath(); x.arc(ex, ey, rad, 0, 7); x.fillStyle = col; x.fill(); };
+      ring(r0, pal.spot);
+      ring(r0 * 0.7, pal.accent);
+      ring(r0 * 0.42, pal.base[0]);
+      ring(r0 * 0.18, pal.spot);
+      x.globalAlpha = 0.8; ring(1.6, '#fff');
+    }
+    x.restore();
+
+    x.globalAlpha = 0.8;
+    x.strokeStyle = pal.band;
+    x.lineWidth = 1.25;
+    x.stroke(path);
+    x.globalAlpha = 1;
+  }
+
+  // ---- static background: plate, vignette, grain, shadow, label ----
+  function renderBg(meta, pal) {
+    const [c, x] = makeLayer();
+    x.fillStyle = '#161412';
+    x.fillRect(0, 0, W, H);
+
+    const grain = 3600;
+    for (let i = 0; i < grain; i++) {
+      x.globalAlpha = 0.028;
+      x.fillStyle = Math.random() < 0.5 ? '#000' : '#fff';
+      x.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+    }
+    x.globalAlpha = 1;
+
+    const v = x.createRadialGradient(CX, 380, 140, CX, 380, 560);
+    v.addColorStop(0, 'rgba(0,0,0,0)');
+    v.addColorStop(1, 'rgba(0,0,0,.55)');
+    x.fillStyle = v;
+    x.fillRect(0, 0, W, H);
+
+    x.strokeStyle = 'rgba(207,198,180,.16)';
+    x.lineWidth = 1;
+    x.strokeRect(14.5, 14.5, W - 29, H - 29);
+    x.strokeRect(20.5, 20.5, W - 41, H - 41);
+
+    const s = x.createRadialGradient(CX, 470, 10, CX, 470, 240);
+    s.addColorStop(0, 'rgba(0,0,0,.45)');
+    s.addColorStop(1, 'rgba(0,0,0,0)');
+    x.save();
+    x.translate(CX, 470); x.scale(1, 0.38); x.translate(-CX, -470);
+    x.fillStyle = s;
+    x.fillRect(CX - 260, 230, 520, 480);
+    x.restore();
+
+    // specimen label
+    x.strokeStyle = 'rgba(207,198,180,.3)';
+    x.beginPath(); x.moveTo(CX - 34, 694.5); x.lineTo(CX + 34, 694.5); x.stroke();
+    x.save();
+    x.translate(CX, 694); x.rotate(Math.PI / 4);
+    x.fillStyle = 'rgba(207,198,180,.4)';
+    x.fillRect(-2.5, -2.5, 5, 5);
+    x.restore();
+
+    x.textAlign = 'center';
+    x.fillStyle = '#cfc6b4';
+    if ('letterSpacing' in x) x.letterSpacing = '4px';
+    x.font = '15px Georgia, serif';
+    x.fillText(meta.common.toUpperCase(), CX, 726);
+    if ('letterSpacing' in x) x.letterSpacing = '0px';
+    x.fillStyle = 'rgba(207,198,180,.6)';
+    x.font = 'italic 14px Georgia, serif';
+    x.fillText(meta.genus + ' ' + meta.species, CX, 750);
+    x.fillStyle = 'rgba(207,198,180,.38)';
+    x.font = '11px Georgia, serif';
+    x.fillText('№ ' + meta.no + '  ·  coll. New Orleans, La.  ·  ' + meta.coll, CX, 772);
+    return c;
+  }
+
+  // ---- static foreground: body, fuzz, antennae, pin ----
+  function renderBody(r, pal) {
+    const [c, x] = makeLayer();
+
+    const quadPt = (p0, cp, p1, t) => ({
+      x: (1 - t) ** 2 * p0.x + 2 * (1 - t) * t * cp.x + t * t * p1.x,
+      y: (1 - t) ** 2 * p0.y + 2 * (1 - t) * t * cp.y + t * t * p1.y,
+      dx: 2 * (1 - t) * (cp.x - p0.x) + 2 * t * (p1.x - cp.x),
+      dy: 2 * (1 - t) * (cp.y - p0.y) + 2 * t * (p1.y - cp.y),
+    });
+    const tipDX = 46 + r() * 30, tipDY = 218 - r() * 30;
+    for (const side of [1, -1]) {
+      const p0 = { x: CX + 4 * side, y: 300 };
+      const cp = { x: CX + 30 * side, y: 240 };
+      const p1 = { x: CX + tipDX * side, y: tipDY };
+      x.strokeStyle = pal.base[0];
+      x.globalAlpha = 0.85;
+      x.lineWidth = 1.2;
+      x.beginPath();
+      x.moveTo(p0.x, p0.y);
+      x.quadraticCurveTo(cp.x, cp.y, p1.x, p1.y);
+      x.stroke();
+      // pectinate barbs, tapering toward the tip
+      x.lineWidth = 0.8;
+      for (let i = 2; i <= 24; i++) {
+        const t = i / 24;
+        const q = quadPt(p0, cp, p1, t);
+        const m = Math.hypot(q.dx, q.dy) || 1;
+        const nx = -q.dy / m, ny = q.dx / m;
+        const len = 8 * (1 - t * 0.85) + 1;
+        x.globalAlpha = 0.6;
+        x.beginPath();
+        x.moveTo(q.x - nx * len * side, q.y - ny * len * side);
+        x.lineTo(q.x + nx * len * 0.55 * side, q.y + ny * len * 0.55 * side);
+        x.stroke();
+      }
+    }
+    x.globalAlpha = 1;
+
+    x.fillStyle = pal.body;
+    for (let y = 302; y <= 470; y += 7) {
+      const w = y < 330 ? 13 : 15 * (1 - (y - 330) / 195) + 4;
+      x.beginPath();
+      x.ellipse(CX, y, w / 2 + 2, 7, 0, 0, 7);
+      x.fill();
+    }
+    x.beginPath(); x.arc(CX, 298, 9, 0, 7); x.fill();
+
+    x.strokeStyle = pal.base[1];
+    for (let i = 0; i < 70; i++) {
+      const y = 300 + r() * 170;
+      const w = (y < 330 ? 8 : 9 * (1 - (y - 330) / 195) + 3);
+      const a = r() * Math.PI;
+      const l = 3 + r() * 5;
+      x.globalAlpha = 0.18;
+      x.lineWidth = 0.7;
+      x.beginPath();
+      x.moveTo(CX + (r() * 2 - 1) * w, y);
+      x.lineTo(CX + (r() * 2 - 1) * w + Math.cos(a) * l, y - Math.abs(Math.sin(a)) * l);
+      x.stroke();
+    }
+    x.globalAlpha = 1;
+
+    // the pin
+    x.fillStyle = 'rgba(0,0,0,.4)';
+    x.beginPath(); x.arc(CX + 1, 326, 4.5, 0, 7); x.fill();
+    x.fillStyle = '#c9c2b4';
+    x.beginPath(); x.arc(CX, 324, 3.5, 0, 7); x.fill();
+    x.fillStyle = '#fff';
+    x.globalAlpha = 0.9;
+    x.beginPath(); x.arc(CX - 1.2, 322.8, 1.1, 0, 7); x.fill();
+    x.globalAlpha = 1;
+    return c;
+  }
+
+  function makeMeta(r) {
+    return {
+      genus: pick(r, GEN_A) + pick(r, GEN_B),
+      species: pick(r, SP_A) + pick(r, SP_B),
+      common: pick(r, ADJ) + ' ' + pick(r, NOUN) + ' Moth',
+      no: String(1000 + Math.floor(r() * 9000)),
+      coll: pick(r, ROMAN) + '.' + (1850 + Math.floor(r() * 177)),
+    };
+  }
+
+  let bgLayer, wingHalf, bodyLayer, meta;
+
+  function regen(seed) {
+    seed = seed === undefined ? Math.floor(Math.random() * 1e9) : seed;
+    const r = mulberry32(seed);
+    const pal = pick(r, PALETTES);
+    meta = makeMeta(r);
+    wingHalf = renderHalf(r, pal);
+    bodyLayer = renderBody(r, pal);
+    bgLayer = renderBg(meta, pal);
+    if (reducedMotion) drawFrame(1);
+  }
+
+  function drawFrame(flex) {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(bgLayer, 0, 0, W, H);
+    for (const side of [1, -1]) {
+      ctx.save();
+      ctx.translate(CX, 0);
+      ctx.scale(flex * side, 1);
+      ctx.drawImage(wingHalf, 0, 0, HALF_W, H);
+      ctx.restore();
+    }
+    ctx.drawImage(bodyLayer, 0, 0, W, H);
+  }
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  regen();
+  if (!reducedMotion) {
+    (function loop(t) {
+      drawFrame(0.985 + 0.015 * Math.sin(t * 0.0016));
+      requestAnimationFrame(loop);
+    })(0);
+  }
+
+  function snapshot() {
+    drawFrame(1);
+    const url = plate.toDataURL('image/png');
+    if (!reducedMotion) drawFrame(0.985);
+    return url;
+  }
+  const filename = () => (meta.genus + '-' + meta.species + '-' + meta.no + '.png').toLowerCase();
+  function download(url, name) {
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    a.click();
+  }
+
+  plate.addEventListener('click', () => regen());
+  document.getElementById('btnNew').addEventListener('click', () => regen());
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); regen(); }
+  });
+  document.getElementById('btnSave').addEventListener('click', () => download(snapshot(), filename()));
+  document.getElementById('btnPin').addEventListener('click', () => {
+    const drawer = document.getElementById('drawer');
+    const empty = drawer.querySelector('.empty');
+    if (empty) empty.remove();
+    const img = document.createElement('img');
+    img.src = snapshot();
+    img.title = meta.common + ' — ' + meta.genus + ' ' + meta.species + ' · № ' + meta.no;
+    const name = filename();
+    img.addEventListener('click', () => download(img.src, name));
+    drawer.appendChild(img);
+    while (drawer.children.length > 24) drawer.firstChild.remove();
+  });
+})();
+</script>
+</body>
+</html>

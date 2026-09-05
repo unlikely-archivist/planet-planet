@@ -13,3 +13,5 @@
 # site pages
 !films/
 !films/**
+!lepidoptarium/
+!lepidoptarium/**
